@@ -16,11 +16,14 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => HomeScreen(title: 'Home'),
-        '/meeting': (context) => MeetingScreen(),
-      },
+      home: HomeScreen(
+        title: 'Home',
+      ),
+//      initialRoute: '/',
+//      routes: {
+//        '/': (context) => HomeScreen(title: 'Home'),
+//        '/meeting': (context) => MeetingScreen(),
+//      },
     );
   }
 }

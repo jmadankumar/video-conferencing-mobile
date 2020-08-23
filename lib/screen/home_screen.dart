@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_conferening_mobile/screen/meeting_screen.dart';
 import 'package:video_conferening_mobile/service/meeting_api.dart';
 import '../widget/button.dart';
 import 'dart:convert';
@@ -19,8 +20,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void joinMeetingClick() {
     final meetingId = controller.text;
     print('Joined meeting ${meetingId}');
-    Navigator.pushNamed(context, '/meeting',
-        arguments: <String, dynamic>{meetingId: meetingId});
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MeetingScreen(
+          meetingId: meetingId,
+        ),
+      ),
+    );
   }
 
   void startMeetingClick() async {
@@ -29,8 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final body = json.decode(response.body);
     final meetingId = body['meetingId'];
     print('Started meeting ${meetingId}');
-    Navigator.pushNamed(context, '/meeting',
-        arguments: <String, dynamic>{meetingId: meetingId});
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MeetingScreen(
+          meetingId: meetingId,
+        ),
+      ),
+    );
   }
 
   @override

@@ -26,6 +26,9 @@ dependencies:
   http: ^0.12.2
   uuid: 2.2.0
   shared_preferences: 0.5.8
+  web_socket_channel: ^1.1.0
+  eventify: ^0.1.4
+  flutter_webrtc: ^0.2.8
 
 
   # The following adds the Cupertino Icons font to your application.
