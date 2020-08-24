@@ -1,3 +1,5 @@
+import 'package:flutter_webrtc/rtc_ice_candidate.dart';
+import 'package:flutter_webrtc/rtc_session_description.dart';
 import 'package:video_conferening_mobile/sdk/message_format.dart';
 
 class JoinedMeetingData {
@@ -62,7 +64,7 @@ class IncomingConnectionRequestData {
 class OfferSdpData {
   String userId;
   String name;
-  dynamic sdp;
+  RTCSessionDescription sdp;
 
   OfferSdpData({this.userId, this.name, this.sdp});
 
@@ -70,7 +72,7 @@ class OfferSdpData {
     return OfferSdpData(
       userId: json['userId'],
       name: json['name'],
-      sdp: json['sdp'],
+      sdp: RTCSessionDescription(json['sdp']['sdp'], json['sdp']['type']),
     );
   }
 }
@@ -78,7 +80,7 @@ class OfferSdpData {
 class AnswerSdpData {
   String userId;
   String name;
-  dynamic sdp;
+  RTCSessionDescription sdp;
 
   AnswerSdpData({this.userId, this.name, this.sdp});
 
@@ -86,7 +88,7 @@ class AnswerSdpData {
     return AnswerSdpData(
       userId: json['userId'],
       name: json['name'],
-      sdp: json['sdp'],
+      sdp: RTCSessionDescription(json['sdp']['sdp'], json['sdp']['type']),
     );
   }
 }
@@ -122,7 +124,7 @@ class UserLeftData {
 class IceCandidateData {
   String userId;
   String name;
-  dynamic candidate;
+  RTCIceCandidate candidate;
 
   IceCandidateData({this.userId, this.name, this.candidate});
 
@@ -130,7 +132,11 @@ class IceCandidateData {
     return IceCandidateData(
       userId: json['userId'],
       name: json['name'],
-      candidate: json['candidate'],
+      candidate: RTCIceCandidate(
+        json['candidate']['candidate'],
+        json['candidate']['sdpMid'],
+        json['candidate']['sdpMLineIndex'],
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:eventify/eventify.dart';
 import 'package:flutter_webrtc/media_stream.dart';
 import 'package:flutter_webrtc/rtc_ice_candidate.dart';
+import 'package:flutter_webrtc/rtc_session_description.dart';
 import 'package:video_conferening_mobile/sdk/connection.dart';
 import 'package:video_conferening_mobile/sdk/message_format.dart';
 import 'package:video_conferening_mobile/sdk/message_payload.dart';
@@ -75,15 +76,16 @@ class Meeting extends EventEmitter {
   }
 
   Connection getConnection(String userId) {
-    return connections.singleWhere((connection) => connection.userId == userId);
+    return connections.firstWhere((connection) => connection.userId == userId,
+        orElse: () => null);
   }
 
-  Connection createConnection(UserJoinedData data) {
+  Future<Connection> createConnection(UserJoinedData data) async {
     if (stream != null) {
       final connection = new Connection(
         connectionType: 'incoming',
-        userId: userId,
-        name: name,
+        userId: data.userId,
+        name: data.name,
         stream: stream,
         audioEnabled: data.config.audioEnabled,
         videoEnabled: data.config.videoEnabled,
@@ -95,7 +97,7 @@ class Meeting extends EventEmitter {
         sendIceCandidate(connection.userId, ev.eventData);
       });
       connections.add(connection);
-      connection.start();
+      await connection.start();
       this.emit('connection', null, connection);
       return connection;
     }
@@ -118,8 +120,8 @@ class Meeting extends EventEmitter {
     userId = data.userId;
   }
 
-  void userJoined(UserJoinedData data) {
-    final connection = createConnection(data);
+  void userJoined(UserJoinedData data) async {
+    final connection = await createConnection(data);
     if (connection != null) {
       sendConnectionRequest(connection.userId);
     }
@@ -129,7 +131,7 @@ class Meeting extends EventEmitter {
     sendMessage('icecandidate', {
       'userId': userId,
       'otherUserId': otherUserId,
-      'candidate': candidate,
+      'candidate': candidate.toMap(),
     });
   }
 
@@ -145,8 +147,8 @@ class Meeting extends EventEmitter {
     });
   }
 
-  void receivedConnectionRequest(UserJoinedData data) {
-    final connection = createConnection(data);
+  void receivedConnectionRequest(UserJoinedData data) async {
+    final connection = await createConnection(data);
     if (connection != null) {
       sendOfferSdp(data.userId);
     }
@@ -159,7 +161,7 @@ class Meeting extends EventEmitter {
       sendMessage('offer-sdp', {
         'userId': userId,
         'otherUserId': otherUserId,
-        'sdp': sdp,
+        'sdp': sdp.toMap(),
       });
     }
   }
@@ -168,7 +170,7 @@ class Meeting extends EventEmitter {
     this.sendAnswerSdp(data.userId, data.sdp);
   }
 
-  void sendAnswerSdp(String otherUserId, dynamic sdp) async {
+  void sendAnswerSdp(String otherUserId, RTCSessionDescription sdp) async {
     final connection = getConnection(otherUserId);
     if (connection != null) {
       await connection.setOfferSdp(sdp);
@@ -176,7 +178,7 @@ class Meeting extends EventEmitter {
       sendMessage('answer-sdp', {
         userId: this.userId,
         otherUserId: otherUserId,
-        sdp: answerSdp,
+        sdp: answerSdp.toMap(),
       });
     }
   }
@@ -341,7 +343,7 @@ class Meeting extends EventEmitter {
       connection.close();
     });
     stopStream();
-    connections = null;
+    connections = [];
     connected = false;
     stream = null;
     joined = false;

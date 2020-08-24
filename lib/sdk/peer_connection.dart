@@ -23,7 +23,7 @@ class PeerConnection extends EventEmitter {
   final Map<String, dynamic> loopbackConstraints = {
     "mandatory": {},
     "optional": [
-      {"DtlsSrtpKeyAgreement": false},
+      {"DtlsSrtpKeyAgreement": true},
     ],
   };
 
@@ -35,7 +35,7 @@ class PeerConnection extends EventEmitter {
     "optional": [],
   };
 
-  void start() async {
+  Future<void> start() async {
     rtcPeerConnection =
         await createPeerConnection(configuration, loopbackConstraints);
     rtcPeerConnection.addStream(localStream);
@@ -67,14 +67,19 @@ class PeerConnection extends EventEmitter {
 
   Future<RTCSessionDescription> createOffer() async {
     if (rtcPeerConnection != null) {
-      final RTCSessionDescription sdp =
-          await rtcPeerConnection.createOffer(offerSdpConstraints);
-      rtcPeerConnection.setLocalDescription(sdp);
+      try {
+        final RTCSessionDescription sdp =
+            await rtcPeerConnection.createOffer(offerSdpConstraints);
+        await rtcPeerConnection.setLocalDescription(sdp);
+        return sdp;
+      } catch (error) {
+        print(error);
+      }
     }
     return null;
   }
 
-  Future<void> setOfferSdp(dynamic sdp) async {
+  Future<void> setOfferSdp(RTCSessionDescription sdp) async {
     if (rtcPeerConnection != null) {
       await rtcPeerConnection.setRemoteDescription(sdp);
     }
@@ -84,18 +89,19 @@ class PeerConnection extends EventEmitter {
     if (rtcPeerConnection != null) {
       final RTCSessionDescription sdp =
           await rtcPeerConnection.createAnswer(offerSdpConstraints);
-      rtcPeerConnection.setLocalDescription(sdp);
+      await rtcPeerConnection.setLocalDescription(sdp);
+      return sdp;
     }
     return null;
   }
 
-  Future<void> setAnswerSdp(dynamic sdp) async {
+  Future<void> setAnswerSdp(RTCSessionDescription sdp) async {
     if (rtcPeerConnection != null) {
       await rtcPeerConnection.setRemoteDescription(sdp);
     }
   }
 
-  Future<void> setCandidate(dynamic candidate) async {
+  Future<void> setCandidate(RTCIceCandidate candidate) async {
     if (rtcPeerConnection != null) {
       await rtcPeerConnection.addCandidate(candidate);
     }
