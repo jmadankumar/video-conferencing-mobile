@@ -93,8 +93,11 @@ class Meeting extends EventEmitter {
       connection.on('connected', null, (ev, context) {
         print('rtp connected');
       });
-      connection.on('icecandidate', null, (ev, context) {
+      connection.on('candidate', null, (ev, context) {
         sendIceCandidate(connection.userId, ev.eventData);
+      });
+      connection.on('stream-changed', null, (ev, context) {
+        this.emit('stream-changed');
       });
       connections.add(connection);
       await connection.start();

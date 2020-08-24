@@ -11,7 +11,7 @@ import 'package:video_conferening_mobile/sdk/meeting.dart';
 import 'package:video_conferening_mobile/service/meeting_api.dart';
 import 'package:video_conferening_mobile/util/user.util.dart';
 import 'package:video_conferening_mobile/widget/button.dart';
-import 'package:web_socket_channel/io.dart';
+import 'package:video_conferening_mobile/widget/remote_connection.dart';
 
 class MeetingScreen extends StatefulWidget {
   String meetingId;
@@ -107,6 +107,25 @@ class _MeetingScreenState extends State<MeetingScreen> {
       userId: userId,
       name: name,
     );
+    meeting.on('connection', null, (ev, context) {
+      setState(() {});
+    });
+    meeting.on('user-left', null, (ev, context) {
+      setState(() {});
+    });
+    meeting.on('ended', null, (ev, context) {
+      setState(() {});
+    });
+    meeting.on('connection-setting-changed', null, (ev, context) {
+      setState(() {});
+    });
+    meeting.on('message', null, (ev, context) {
+      setState(() {});
+    });
+    meeting.on('stream-changed', null, (ev, context) {
+      setState(() {});
+    });
+
     setState(() {
       isValidMeeting = false;
     });
@@ -143,6 +162,17 @@ class _MeetingScreenState extends State<MeetingScreen> {
         child: RTCVideoView(_localRenderer),
       ),
     ];
+    if (meeting != null &&
+        meeting.connections != null &&
+        meeting.connections.length > 0) {
+      meeting.connections.forEach((connection) {
+        if (connection.renderer != null) {
+          widgets.add(RemoteConnection(
+            renderer: connection.renderer,
+          ));
+        }
+      });
+    }
     return Container(
       child: Center(
         child: OrientationBuilder(builder: (context, orientation) {

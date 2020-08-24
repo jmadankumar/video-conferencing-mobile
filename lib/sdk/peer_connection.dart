@@ -6,6 +6,8 @@ import 'package:flutter_webrtc/webrtc.dart';
 class PeerConnection extends EventEmitter {
   MediaStream localStream;
   MediaStream remoteStream;
+  RTCVideoRenderer renderer = new RTCVideoRenderer();
+
   RTCPeerConnection rtcPeerConnection;
 
   PeerConnection({this.localStream});
@@ -43,11 +45,15 @@ class PeerConnection extends EventEmitter {
     rtcPeerConnection.onRemoveStream = _onRemoveStream;
     rtcPeerConnection.onRenegotiationNeeded = _onRenegotiationNeeded;
     rtcPeerConnection.onIceCandidate = _onIceCandidate;
+    await renderer.initialize();
     this.emit('connected');
   }
 
   void _onAddStream(MediaStream stream) {
     remoteStream = stream;
+    renderer.srcObject = stream;
+    renderer.objectFit = RTCVideoViewObjectFit.RTCVideoViewObjectFitContain;
+    this.emit('stream-changed');
   }
 
   void _onRemoveStream(MediaStream stream) {
@@ -112,6 +118,7 @@ class PeerConnection extends EventEmitter {
       rtcPeerConnection.close();
       rtcPeerConnection = null;
     }
+    renderer.dispose();
     localStream = null;
     remoteStream = null;
   }
