@@ -179,9 +179,9 @@ class Meeting extends EventEmitter {
       await connection.setOfferSdp(sdp);
       final answerSdp = await connection.createAnswer();
       sendMessage('answer-sdp', {
-        userId: this.userId,
-        otherUserId: otherUserId,
-        sdp: answerSdp.toMap(),
+        'userId': this.userId,
+        'otherUserId': otherUserId,
+        'sdp': answerSdp.toMap(),
       });
     }
   }

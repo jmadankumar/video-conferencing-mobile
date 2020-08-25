@@ -6,11 +6,13 @@ import 'package:flutter_webrtc/media_stream.dart';
 import 'package:flutter_webrtc/rtc_video_view.dart';
 import 'package:flutter_webrtc/webrtc.dart';
 import 'package:http/http.dart';
+import 'package:video_conferening_mobile/pojo/meeting_detail.dart';
 import 'package:video_conferening_mobile/screen/home_screen.dart';
 import 'package:video_conferening_mobile/sdk/meeting.dart';
 import 'package:video_conferening_mobile/service/meeting_api.dart';
 import 'package:video_conferening_mobile/util/user.util.dart';
 import 'package:video_conferening_mobile/widget/button.dart';
+import 'package:video_conferening_mobile/widget/control_panel.dart';
 import 'package:video_conferening_mobile/widget/remote_connection.dart';
 
 class MeetingScreen extends StatefulWidget {
@@ -23,7 +25,7 @@ class MeetingScreen extends StatefulWidget {
 }
 
 class _MeetingScreenState extends State<MeetingScreen> {
-  Map<String, dynamic> meetingDetails;
+  MeetingDetail meetingDetail;
   bool isValidMeeting = false;
   TextEditingController textEditingController = new TextEditingController();
   Meeting meeting;
@@ -54,8 +56,10 @@ class _MeetingScreenState extends State<MeetingScreen> {
   deactivate() {
     super.deactivate();
     _localRenderer.dispose();
-    meeting.destroy();
-    meeting = null;
+    if (meeting != null) {
+      meeting.destroy();
+      meeting = null;
+    }
   }
 
   initRenderers() async {
@@ -78,15 +82,12 @@ class _MeetingScreenState extends State<MeetingScreen> {
     print('join $meetingId');
     try {
       Response response = await joinMeeting(meetingId);
-      meetingDetails = json.decode(response.body);
-      print('meetingDetails $meetingDetails');
-      if (meetingDetails['message'] != null) {
-        goToHome();
-      } else {
-        setState(() {
-          isValidMeeting = true;
-        });
-      }
+      var data = json.decode(response.body);
+      meetingDetail = MeetingDetail.fromJson(data);
+      print('meetingDetail $meetingDetail');
+      setState(() {
+        isValidMeeting = true;
+      });
     } catch (err) {
       goToHome();
       print(err);
@@ -102,7 +103,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     _localRenderer.objectFit =
         RTCVideoViewObjectFit.RTCVideoViewObjectFitContain;
     meeting = new Meeting(
-      meetingId: meetingDetails['id'],
+      meetingId: meetingDetail.id,
       stream: _localstream,
       userId: userId,
       name: name,
@@ -190,6 +191,36 @@ class _MeetingScreenState extends State<MeetingScreen> {
     );
   }
 
+  void onEnd() {
+    if (meeting != null) {
+      meeting.end();
+      goToHome();
+    }
+  }
+
+  void onLeave() {
+    if (meeting != null) {
+      meeting.leave();
+      goToHome();
+    }
+  }
+
+  void onVideoToggle() {
+    if (meeting != null) {
+      setState(() {
+        meeting.toggleVideo();
+      });
+    }
+  }
+
+  void onAudioToggle() {
+    if (meeting != null) {
+      setState(() {
+        meeting.toggleAudio();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -206,6 +237,17 @@ class _MeetingScreenState extends State<MeetingScreen> {
         ],
       ),
       body: renderMeeting(),
+      bottomNavigationBar: ControlPanel(
+        onLeave: onLeave,
+        onEnd: onEnd,
+        onAudioToggle: onAudioToggle,
+        onVideoToggle: onVideoToggle,
+        videoEnabled: meeting != null ? meeting.videoEnabled : false,
+        audioEnabled: meeting != null ? meeting.audioEnabled : false,
+        isHost: meeting != null && meetingDetail != null
+            ? meeting.userId == meetingDetail.hostId
+            : false,
+      ),
     );
   }
 }

@@ -12,5 +12,8 @@ Future<http.Response> startMeeting() async {
 
 Future<http.Response> joinMeeting(String meetingId) async {
   var response = await http.get('$MEETING_API_URL/join?meetingId=$meetingId');
-  return response;
+  if (response.statusCode >= 200 && response.statusCode < 400) {
+    return response;
+  }
+  throw UnsupportedError('Not a valid meeting');
 }
