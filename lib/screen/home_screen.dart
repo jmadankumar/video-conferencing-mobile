@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:video_conferening_mobile/screen/meeting_screen.dart';
+import 'package:video_conferening_mobile/screen/join_screen.dart';
 import 'package:video_conferening_mobile/service/meeting_api.dart';
 import '../widget/button.dart';
 import 'dart:convert';
@@ -17,38 +17,33 @@ class _HomeScreenState extends State<HomeScreen> {
   String meetingId;
   final TextEditingController controller = new TextEditingController();
 
-  void joinMeetingClick() {
-    final meetingId = controller.text;
-    print('Joined meeting ${meetingId}');
+  void goToJoinScreen() {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => MeetingScreen(
+        builder: (context) => JoinScreen(
           meetingId: meetingId,
         ),
       ),
     );
   }
 
+  void joinMeetingClick() {
+    meetingId = controller.text;
+    print('Joined meeting $meetingId');
+    goToJoinScreen();
+  }
+
   void startMeetingClick() async {
-//    Navigator.pushNamed(context, '/meeting');
     var response = await startMeeting();
     final body = json.decode(response.body);
-    final meetingId = body['meetingId'];
-    print('Started meeting ${meetingId}');
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MeetingScreen(
-          meetingId: meetingId,
-        ),
-      ),
-    );
+    meetingId = body['meetingId'];
+    print('Started meeting $meetingId');
+    goToJoinScreen();
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
   }
 
