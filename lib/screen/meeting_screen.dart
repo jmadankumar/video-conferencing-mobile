@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/get_user_media.dart';
 import 'package:flutter_webrtc/media_stream.dart';
@@ -11,6 +10,7 @@ import 'package:video_conferening_mobile/util/user.util.dart';
 import 'package:video_conferening_mobile/widget/actions_button.dart';
 import 'package:video_conferening_mobile/widget/control_panel.dart';
 import 'package:video_conferening_mobile/widget/remote_connection.dart';
+import 'package:video_conferening_mobile/widget/remote_video_page_view.dart';
 
 enum PopUpChoiceEnum { CopyLink, CopyId }
 
@@ -92,7 +92,6 @@ class _MeetingScreenState extends State<MeetingScreen> {
       ),
     );
   }
-
 
   void start() async {
     final String userId = await loadUserId();
@@ -206,7 +205,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
   }
 
   bool isVideoEnabled() {
-    return meeting != null ? meeting.audioEnabled : false;
+    return meeting != null ? meeting.videoEnabled : false;
   }
 
   bool isAudioEnabled() {
@@ -254,7 +253,24 @@ class _MeetingScreenState extends State<MeetingScreen> {
         actions: _buildActions(),
         backgroundColor: Colors.blueGrey,
       ),
-      body: renderMeeting(),
+      body: Stack(
+        children: <Widget>[
+          meeting != null
+              ? RemoteVideoPageView(
+                  connections: meeting.connections,
+                )
+              : Icon(Icons.text_rotation_none),
+          Positioned(
+            bottom: 60.0,
+            right: 0.0,
+            child: Container(
+              width: 150.0,
+              height: 200.0,
+              child: RTCVideoView(_localRenderer),
+            ),
+          )
+        ],
+      ),
       bottomNavigationBar: ControlPanel(
         onAudioToggle: onAudioToggle,
         onVideoToggle: onVideoToggle,
