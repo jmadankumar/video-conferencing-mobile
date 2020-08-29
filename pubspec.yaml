@@ -29,6 +29,7 @@ dependencies:
   web_socket_channel: ^1.1.0
   eventify: ^0.1.4
   flutter_webrtc: ^0.2.8
+  clipboard_manager: ^0.0.4
 
 
   # The following adds the Cupertino Icons font to your application.

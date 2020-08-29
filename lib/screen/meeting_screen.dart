@@ -1,3 +1,4 @@
+import 'package:clipboard_manager/clipboard_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/get_user_media.dart';
 import 'package:flutter_webrtc/media_stream.dart';
@@ -43,6 +44,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
   Meeting meeting;
   bool isConnectionFailed = false;
   final _localRenderer = new RTCVideoRenderer();
+  final scaffoldKey = GlobalKey<ScaffoldState>();
   final Map<String, dynamic> mediaConstraints = {
     "audio": true,
     "video": true,
@@ -210,7 +212,19 @@ class _MeetingScreenState extends State<MeetingScreen> {
     return meeting != null ? meeting.audioEnabled : false;
   }
 
-  void _select(PopUpChoice choice) {}
+  void _select(PopUpChoice choice) {
+    final meetingId = widget.meetingId;
+    final snackBar = SnackBar(content: Text('Copied'));
+    String text = '';
+    if (choice.id == PopUpChoiceEnum.CopyId) {
+      text = meetingId;
+    } else if (choice.id == PopUpChoiceEnum.CopyLink) {
+      text = 'https://meetx.madankumar.me/meeting/$meetingId';
+    }
+    ClipboardManager.copyToClipBoard(text).then((result) {
+      scaffoldKey.currentState.showSnackBar(snackBar);
+    });
+  }
 
   void handleReconnect() {
     if (meeting != null) {
@@ -252,6 +266,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         title: Text("Meeting"),
         actions: _buildActions(),
