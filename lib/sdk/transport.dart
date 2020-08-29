@@ -1,21 +1,31 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:eventify/eventify.dart';
 import 'package:web_socket_channel/io.dart';
 
 class Transport extends EventEmitter {
   IOWebSocketChannel channel;
   String url;
-  bool reconnect = false;
+  bool canReconnect = false;
   int retryCount = 0;
   int maxRetryCount = 1;
+  Timer timer;
+  bool closed = false;
 
-  Transport({this.url, this.reconnect, this.maxRetryCount});
+  Transport({this.url, this.canReconnect, this.maxRetryCount});
 
-  void connect() {
+  void connect() async {
     try {
       if (retryCount <= maxRetryCount) {
         retryCount++;
-        channel = IOWebSocketChannel.connect(url);
+        //https://github.com/dart-lang/web_socket_channel/issues/61#issuecomment-585564273
+        var ws = await WebSocket.connect(url).timeout(Duration(seconds: 5));
+        channel = IOWebSocketChannel(ws);
         listenEvents();
+      } else {
+        this.emit('failed');
       }
     } catch (error) {
       print(error);
@@ -25,15 +35,16 @@ class Transport extends EventEmitter {
 
   void listenEvents() {
     if (channel != null) {
+      channel.stream.listen(handleMessage,
+          onDone: handleClose, onError: handleError, cancelOnError: true);
       handleOpen();
-      channel.stream
-          .listen(handleMessage, onDone: handleClose, onError: handleError);
     }
   }
 
   void remoteEvents() {}
 
   void handleOpen() {
+    sendHeartbeat();
     this.emit('open');
   }
 
@@ -42,14 +53,18 @@ class Transport extends EventEmitter {
   }
 
   void handleClose() {
-    this.emit('close');
+    reset();
+    if (!closed) {
+      connect();
+    }
   }
 
   void handleError(Object error) {
-//    remoteEvents();
     print(error);
-    destroy();
-    connect();
+    reset();
+    if (!closed) {
+      connect();
+    }
   }
 
   void send(String message) {
@@ -58,11 +73,35 @@ class Transport extends EventEmitter {
     }
   }
 
-  void destroy() {
+  void sendHeartbeat() {
+    timer = Timer.periodic(Duration(seconds: 10), (timer) {
+      send(json.encode({'type': 'heartbeat'}));
+    });
+  }
+
+  void reset() {
+    if (timer != null) {
+      timer.cancel();
+      timer = null;
+    }
     if (channel != null) {
       channel.sink.close();
       channel = null;
-//      remoteEvents();
     }
+  }
+
+  void close() {
+    closed = true;
+    destroy();
+  }
+
+  void destroy() {
+    reset();
+    url = '';
+  }
+
+  void reconnect() {
+    retryCount = 0;
+    connect();
   }
 }

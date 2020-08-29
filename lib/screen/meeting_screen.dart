@@ -41,6 +41,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
   bool isValidMeeting = false;
   TextEditingController textEditingController = new TextEditingController();
   Meeting meeting;
+  bool isConnectionFailed = false;
   final _localRenderer = new RTCVideoRenderer();
   final Map<String, dynamic> mediaConstraints = {
     "audio": true,
@@ -106,71 +107,67 @@ class _MeetingScreenState extends State<MeetingScreen> {
       userId: userId,
       name: widget.name,
     );
+    meeting.on('open', null, (ev, context) {
+      setState(() {
+        isConnectionFailed = false;
+      });
+    });
     meeting.on('connection', null, (ev, context) {
-      setState(() {});
+      setState(() {
+        isConnectionFailed = false;
+      });
     });
-    meeting.on('user-left', null, (ev, context) {
-      setState(() {});
+    meeting.on('user-left', null, (ev, ctx) {
+      setState(() {
+        isConnectionFailed = false;
+      });
     });
-    meeting.on('ended', null, (ev, context) {
-      setState(() {});
+    meeting.on('ended', null, (ev, ctx) {
+      meetingEndedEvent();
     });
-    meeting.on('connection-setting-changed', null, (ev, context) {
-      setState(() {});
+    meeting.on('connection-setting-changed', null, (ev, ctx) {
+      setState(() {
+        isConnectionFailed = false;
+      });
     });
-    meeting.on('message', null, (ev, context) {
-      setState(() {});
+    meeting.on('message', null, (ev, ctx) {
+      setState(() {
+        isConnectionFailed = false;
+      });
     });
-    meeting.on('stream-changed', null, (ev, context) {
-      setState(() {});
+    meeting.on('stream-changed', null, (ev, ctx) {
+      setState(() {
+        isConnectionFailed = false;
+      });
     });
-
+    meeting.on('failed', null, (ev, ctx) {
+      setState(() {
+        isConnectionFailed = true;
+      });
+    });
+    meeting.on('not-found', null, (ev, ctx) {
+      meetingEndedEvent();
+    });
     setState(() {
       isValidMeeting = false;
     });
+  }
+
+  void meetingEndedEvent() {
+//    Scaffold.of(context).showSnackBar(SnackBar(
+//      content: Text('Meeting Ended'),
+//    ));
+    goToHome();
   }
 
   void exitClick() {
     Navigator.of(context).pushReplacementNamed('/');
   }
 
-  Widget renderMeeting() {
-    var widgets = <Widget>[
-      Expanded(
-        child: RTCVideoView(_localRenderer),
-      ),
-    ];
-    if (meeting != null &&
-        meeting.connections != null &&
-        meeting.connections.length > 0) {
-      meeting.connections.forEach((connection) {
-        if (connection.renderer != null) {
-          widgets.add(RemoteConnection(
-            renderer: connection.renderer,
-          ));
-        }
-      });
-    }
-    return Container(
-      child: Center(
-        child: OrientationBuilder(builder: (context, orientation) {
-          return orientation == Orientation.portrait
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: widgets,
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: widgets,
-                );
-        }),
-      ),
-    );
-  }
-
   void onEnd() {
     if (meeting != null) {
       meeting.end();
+      meeting = null;
       goToHome();
     }
   }
@@ -178,6 +175,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
   void onLeave() {
     if (meeting != null) {
       meeting.leave();
+      meeting = null;
       goToHome();
     }
   }
@@ -213,6 +211,12 @@ class _MeetingScreenState extends State<MeetingScreen> {
   }
 
   void _select(PopUpChoice choice) {}
+
+  void handleReconnect() {
+    if (meeting != null) {
+      meeting.reconnect();
+    }
+  }
 
   List<Widget> _buildActions() {
     var widgets = <Widget>[
@@ -276,6 +280,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
         onVideoToggle: onVideoToggle,
         videoEnabled: isVideoEnabled(),
         audioEnabled: isAudioEnabled(),
+        isConnectionFailed: isConnectionFailed,
+        onReconnect: handleReconnect,
       ),
     );
   }

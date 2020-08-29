@@ -11,7 +11,8 @@ import 'package:video_conferening_mobile/sdk/payload_data.dart';
 import 'package:video_conferening_mobile/sdk/transport.dart';
 
 class Meeting extends EventEmitter {
-  final String url = 'wss://api.meetx.madankumar.me/websocket/meeting';
+ final String url = 'wss://api.meetx.madankumar.me/websocket/meeting';
+  // final String url = 'ws://10.0.2.2:8081/websocket/meeting';
   Transport transport;
   String meetingId;
   List<Connection> connections = new List();
@@ -28,7 +29,7 @@ class Meeting extends EventEmitter {
     this.transport = new Transport(
       url: formatUrl(this.meetingId),
       maxRetryCount: 3,
-      reconnect: true,
+      canReconnect: true,
     );
     this.listenMessage();
   }
@@ -70,6 +71,10 @@ class Meeting extends EventEmitter {
       });
       transport.on('closed', null, (ev, context) {
         connected = false;
+      });
+      transport.on('failed', null, (ev, context) {
+        this.reset();
+        this.emit('failed');
       });
       transport.connect();
     }
@@ -291,6 +296,10 @@ class Meeting extends EventEmitter {
     });
   }
 
+  void handleNotFound() {
+    this.emit('not-found');
+  }
+
   stopStream() {
     if (stream != null) {
       stream.dispose();
@@ -332,6 +341,9 @@ class Meeting extends EventEmitter {
       case 'message':
         handleUserMessage(MessageData.fromJson(payload.data));
         break;
+      case 'not-found':
+        handleNotFound();
+        break;
       default:
         break;
     }
@@ -350,5 +362,17 @@ class Meeting extends EventEmitter {
     connected = false;
     stream = null;
     joined = false;
+  }
+
+  void reset() {
+    this.connections = new List();
+    this.joined = false;
+    this.connected = false;
+  }
+
+  void reconnect() {
+    if (transport != null) {
+      transport.reconnect();
+    }
   }
 }
