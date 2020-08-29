@@ -143,6 +143,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
       });
     });
     meeting.on('failed', null, (ev, ctx) {
+      final snackBar = SnackBar(content: Text('Connection Failed'));
+      scaffoldKey.currentState.showSnackBar(snackBar);
       setState(() {
         isConnectionFailed = true;
       });
@@ -156,9 +158,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
   }
 
   void meetingEndedEvent() {
-//    Scaffold.of(context).showSnackBar(SnackBar(
-//      content: Text('Meeting Ended'),
-//    ));
+    final snackBar = SnackBar(content: Text('Meeing Ended'));
+    scaffoldKey.currentState.showSnackBar(snackBar);
     goToHome();
   }
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:video_conferening_mobile/pojo/meeting_detail.dart';
 import 'package:video_conferening_mobile/screen/join_screen.dart';
 import 'package:video_conferening_mobile/service/meeting_api.dart';
 import '../widget/button.dart';
@@ -14,32 +16,47 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String meetingId;
   final TextEditingController controller = new TextEditingController();
+  final scaffoldKey = GlobalKey<ScaffoldState>();
 
-  void goToJoinScreen() {
+  void goToJoinScreen(MeetingDetail meetingDetail) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => JoinScreen(
-          meetingId: meetingId,
+          meetingId: meetingDetail.id,
+          meetingDetail: meetingDetail,
         ),
       ),
     );
   }
 
-  void joinMeetingClick() {
-    meetingId = controller.text;
-    print('Joined meeting $meetingId');
-    goToJoinScreen();
+  void validateMeeting(String meetingId) async {
+    try {
+      Response response = await joinMeeting(meetingId);
+      var data = json.decode(response.body);
+      final meetingDetail = MeetingDetail.fromJson(data);
+      print('meetingDetail $meetingDetail');
+      goToJoinScreen(meetingDetail);
+    } catch (err) {
+      final snackbar = SnackBar(content: Text('Invalid MeetingId'));
+      scaffoldKey.currentState.showSnackBar(snackbar);
+      print(err);
+    }
   }
+
+  void joinMeetingClick() async {
+    final meetingId = controller.text;
+    print('Joined meeting $meetingId');
+    validateMeeting(meetingId);
+   }
 
   void startMeetingClick() async {
     var response = await startMeeting();
     final body = json.decode(response.body);
-    meetingId = body['meetingId'];
+    final meetingId = body['meetingId'];
     print('Started meeting $meetingId');
-    goToJoinScreen();
+    validateMeeting(meetingId);
   }
 
   @override
@@ -50,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         title: Text(widget.title),
       ),
