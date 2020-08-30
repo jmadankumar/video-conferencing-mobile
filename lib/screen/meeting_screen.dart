@@ -5,8 +5,10 @@ import 'package:flutter_webrtc/media_stream.dart';
 import 'package:flutter_webrtc/rtc_video_view.dart';
 import 'package:flutter_webrtc/webrtc.dart';
 import 'package:video_conferening_mobile/pojo/meeting_detail.dart';
+import 'package:video_conferening_mobile/screen/chat_screen.dart';
 import 'package:video_conferening_mobile/screen/home_screen.dart';
 import 'package:video_conferening_mobile/sdk/meeting.dart';
+import 'package:video_conferening_mobile/sdk/message_format.dart';
 import 'package:video_conferening_mobile/util/user.util.dart';
 import 'package:video_conferening_mobile/widget/actions_button.dart';
 import 'package:video_conferening_mobile/widget/control_panel.dart';
@@ -62,6 +64,9 @@ class _MeetingScreenState extends State<MeetingScreen> {
     PopUpChoice(PopUpChoiceEnum.CopyId, 'Copy Meeting ID'),
     PopUpChoice(PopUpChoiceEnum.CopyLink, 'Copy Meeting Link'),
   ];
+  bool isChatOpen = false;
+  List<MessageFormat> messages = new List();
+  final PageController pageController = new PageController();
 
   @override
   void initState() {
@@ -134,6 +139,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     meeting.on('message', null, (ev, ctx) {
       setState(() {
         isConnectionFailed = false;
+        messages.add(ev.eventData);
       });
     });
     meeting.on('stream-changed', null, (ev, ctx) {
@@ -231,6 +237,26 @@ class _MeetingScreenState extends State<MeetingScreen> {
     }
   }
 
+  void handleChatToggle() {
+    setState(() {
+      isChatOpen = !isChatOpen;
+      pageController.jumpToPage(isChatOpen ? 1 : 0);
+    });
+  }
+
+  void handleSendMessage(String text) {
+    if (meeting != null) {
+      meeting.sendUserMessage(text);
+      final message = MessageFormat(
+        userId: meeting.userId,
+        text: text,
+      );
+      setState(() {
+        messages.add(message);
+      });
+    }
+  }
+
   List<Widget> _buildActions() {
     var widgets = <Widget>[
       ActionButton(
@@ -262,6 +288,27 @@ class _MeetingScreenState extends State<MeetingScreen> {
     return widgets;
   }
 
+  Widget _buildMeetingRoom() {
+    return Stack(
+      children: <Widget>[
+        meeting != null
+            ? RemoteVideoPageView(
+                connections: meeting.connections,
+              )
+            : Icon(Icons.text_rotation_none),
+        Positioned(
+          bottom: 60.0,
+          right: 0.0,
+          child: Container(
+            width: 150.0,
+            height: 200.0,
+            child: RTCVideoView(_localRenderer),
+          ),
+        )
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -271,21 +318,17 @@ class _MeetingScreenState extends State<MeetingScreen> {
         actions: _buildActions(),
         backgroundColor: Colors.blueGrey,
       ),
-      body: Stack(
+      body: PageView(
+        physics: NeverScrollableScrollPhysics(),
+        controller: pageController,
         children: <Widget>[
-          meeting != null
-              ? RemoteVideoPageView(
-                  connections: meeting.connections,
-                )
-              : Icon(Icons.text_rotation_none),
-          Positioned(
-            bottom: 60.0,
-            right: 0.0,
-            child: Container(
-              width: 150.0,
-              height: 200.0,
-              child: RTCVideoView(_localRenderer),
-            ),
+          _buildMeetingRoom(),
+          ChatScreen(
+            messages: messages,
+            onSendMessage: handleSendMessage,
+            connections: meeting.connections,
+            userId: meeting.userId,
+            userName: meeting.name,
           )
         ],
       ),
@@ -296,6 +339,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
         audioEnabled: isAudioEnabled(),
         isConnectionFailed: isConnectionFailed,
         onReconnect: handleReconnect,
+        onChatToggle: handleChatToggle,
+        isChatOpen: isChatOpen,
       ),
     );
   }

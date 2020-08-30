@@ -5,12 +5,12 @@ import 'package:video_conferening_mobile/widget/button.dart';
 class ControlPanel extends StatelessWidget {
   final bool videoEnabled;
   final bool audioEnabled;
-
+  final bool isConnectionFailed;
+  final bool isChatOpen;
   final VoidCallback onVideoToggle;
   final VoidCallback onAudioToggle;
   final VoidCallback onReconnect;
-
-  final bool isConnectionFailed;
+  final VoidCallback onChatToggle;
 
   ControlPanel({
     this.onAudioToggle,
@@ -19,6 +19,8 @@ class ControlPanel extends StatelessWidget {
     this.audioEnabled,
     this.onReconnect,
     this.isConnectionFailed,
+    this.onChatToggle,
+    this.isChatOpen,
   });
 
   List<Widget> buildControls() {
@@ -37,14 +39,9 @@ class ControlPanel extends StatelessWidget {
           iconSize: 32.0,
         ),
         IconButton(
-          onPressed: onAudioToggle,
-          icon: Icon(Icons.chat),
-          color: Colors.white,
-          iconSize: 32.0,
-        ),
-        IconButton(
-          onPressed: onAudioToggle,
-          icon: Icon(Icons.group),
+          onPressed: onChatToggle,
+          icon:
+              Icon(isChatOpen ? Icons.speaker_notes_off : Icons.speaker_notes),
           color: Colors.white,
           iconSize: 32.0,
         ),
