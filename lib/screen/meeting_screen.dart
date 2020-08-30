@@ -1,5 +1,5 @@
-import 'package:clipboard_manager/clipboard_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/get_user_media.dart';
 import 'package:flutter_webrtc/media_stream.dart';
 import 'package:flutter_webrtc/rtc_video_view.dart';
@@ -10,7 +10,6 @@ import 'package:video_conferening_mobile/sdk/meeting.dart';
 import 'package:video_conferening_mobile/util/user.util.dart';
 import 'package:video_conferening_mobile/widget/actions_button.dart';
 import 'package:video_conferening_mobile/widget/control_panel.dart';
-import 'package:video_conferening_mobile/widget/remote_connection.dart';
 import 'package:video_conferening_mobile/widget/remote_video_page_view.dart';
 
 enum PopUpChoiceEnum { CopyLink, CopyId }
@@ -213,7 +212,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
     return meeting != null ? meeting.audioEnabled : false;
   }
 
-  void _select(PopUpChoice choice) {
+  void _select(PopUpChoice choice) async {
     final meetingId = widget.meetingId;
     final snackBar = SnackBar(content: Text('Copied'));
     String text = '';
@@ -222,9 +221,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
     } else if (choice.id == PopUpChoiceEnum.CopyLink) {
       text = 'https://meetx.madankumar.me/meeting/$meetingId';
     }
-    ClipboardManager.copyToClipBoard(text).then((result) {
-      scaffoldKey.currentState.showSnackBar(snackBar);
-    });
+    await Clipboard.setData(ClipboardData(text: text));
+    scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
   void handleReconnect() {
