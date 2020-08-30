@@ -291,13 +291,24 @@ class _MeetingScreenState extends State<MeetingScreen> {
   Widget _buildMeetingRoom() {
     return Stack(
       children: <Widget>[
-        meeting != null
+        meeting != null &&
+                meeting.connections != null &&
+                meeting.connections.length > 0
             ? RemoteVideoPageView(
                 connections: meeting.connections,
               )
-            : Icon(Icons.text_rotation_none),
+            : Center(
+                child: Text(
+                  'Waiting for participants to join the meeting',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 24.0,
+                  ),
+                ),
+              ),
         Positioned(
-          bottom: 60.0,
+          bottom: 10.0,
           right: 0.0,
           child: Container(
             width: 150.0,
@@ -314,9 +325,9 @@ class _MeetingScreenState extends State<MeetingScreen> {
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
-        title: Text("Meeting"),
+        title: Text("MeetX"),
         actions: _buildActions(),
-        backgroundColor: Colors.blueGrey,
+        backgroundColor: Colors.green,
       ),
       body: PageView(
         physics: NeverScrollableScrollPhysics(),
